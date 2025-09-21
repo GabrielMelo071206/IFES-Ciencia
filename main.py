@@ -1,13 +1,13 @@
-from typing import Optional, List
+from typing import Optional
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status, UploadFile, File
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.staticfiles import StaticFiles
-import shutil
 import os
+import shutil
 
-# Importações dos repositórios
+# Importações dos repositórios e modelos
 from data.repo import administrador_repo, integrante_repo, experimento_repo
 from data.model.integrante_model import Integrante
 from data.model.experimento_model import Experimento
@@ -15,23 +15,22 @@ from util.security import verificar_senha
 from criar_admin import criar_admin_inicial
 
 app = FastAPI()
-
 app.add_middleware(SessionMiddleware, secret_key="uma-chave-secreta-bem-forte")
 
-# CRIA AS PASTAS DE UPLOADS E STATIC
+# Diretórios
 uploads_dir = "uploads"
 static_dir = "static"
-if not os.path.exists(uploads_dir):
-    os.makedirs(uploads_dir)
-if not os.path.exists(static_dir):
-    os.makedirs(static_dir)
+os.makedirs(uploads_dir, exist_ok=True)
+os.makedirs(static_dir, exist_ok=True)
 
+# Templates
 templates = Jinja2Templates(directory="templates")
-# Monta as pastas para ser acessível publicamente na URL
+
+# Monta as pastas estáticas
 app.mount("/static", StaticFiles(directory=uploads_dir), name="uploads")
 app.mount("/static_css", StaticFiles(directory=static_dir), name="static_css")
 
-
+# Funções utilitárias
 def get_flash_messages(request: Request):
     return request.session.pop("flash_messages", [])
 
@@ -43,21 +42,7 @@ def verificar_login_admin(request: Request):
             headers={"Location": "/login_admin"}
         )
 
-# --- Rotas para o Sistema (Login/Logout) ---
-
-# A rota principal agora renderiza a página de cliente diretamente
-@app.get("/", response_class=HTMLResponse)
-async def inicio_cliente(request: Request):
-    info_projeto = {
-        "titulo": "Sobre o Projeto IFES Ciência",
-        "texto": "O projeto 'Ifes Ciência' do campus Cachoeiro, iniciado em setembro de 2024, mostra experiências científicas curiosas e tem alcançado destaque nacional. A equipe consegue manter uma frequência de postagens constante, pois a maior parte do conteúdo é gravada com antecedência, com a produção de cada vídeo levando cerca de 15 dias.",
-    }
-    context = {
-        "request": request,
-        "info_projeto": info_projeto,
-        "flash_messages": get_flash_messages(request),
-    }
-    return templates.TemplateResponse("/cliente/index.html", context)
+# --- LOGIN/LOGOUT ADMIN ---
 
 @app.get("/login_admin", response_class=HTMLResponse)
 async def login_admin(request: Request):
@@ -70,13 +55,12 @@ async def login_admin(request: Request):
 @app.post("/login_admin", response_class=RedirectResponse)
 async def processar_login_admin(request: Request, email: str = Form(...), senha: str = Form(...)):
     admin = administrador_repo.obter_administrador_por_email(email)
-    
     if admin and verificar_senha(senha, admin.senha):
         request.session["admin_logado"] = True
         request.session.setdefault("flash_messages", []).append({"message": "Login bem-sucedido!", "type": "success"})
         return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
     else:
-        request.session.setdefault("flash_messages", []).append({"message": "Email ou senha inválidos. Tente novamente.", "type": "danger"})
+        request.session.setdefault("flash_messages", []).append({"message": "Email ou senha inválidos.", "type": "danger"})
         return RedirectResponse(url="/login_admin", status_code=status.HTTP_303_SEE_OTHER)
 
 @app.get("/admin/logout", response_class=RedirectResponse)
@@ -85,17 +69,16 @@ async def logout_admin(request: Request):
     request.session.setdefault("flash_messages", []).append({"message": "Você saiu da área de administrador.", "type": "info"})
     return RedirectResponse(url="/login_admin", status_code=status.HTTP_303_SEE_OTHER)
 
-# --- Rotas para Administrador (CRUD) ---
+# --- ADMIN INTEGRANTES ---
 
 @app.get("/admin/integrantes", response_class=HTMLResponse)
 async def listar_integrantes(request: Request, _=Depends(verificar_login_admin)):
     integrantes = integrante_repo.obter_todos_integrantes()
-    context = {
+    return templates.TemplateResponse("/admin/admin_dashboard.html", {
         "request": request,
         "integrantes": integrantes,
-        "flash_messages": get_flash_messages(request),
-    }
-    return templates.TemplateResponse("/admin/admin_dashboard.html", context)
+        "flash_messages": get_flash_messages(request)
+    })
 
 @app.post("/admin/integrantes", response_class=RedirectResponse)
 async def adicionar_integrante(
@@ -114,12 +97,11 @@ async def adicionar_integrante(
     file_path = os.path.join(uploads_dir, foto_file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(foto_file.file, buffer)
-        
     foto_url = f"/static/{foto_file.filename}"
-    
+
     novo_integrante = Integrante(id=None, nome=nome, turma=turma, funcao=funcao, foto=foto_url, redes_sociais=redes_sociais)
     integrante_repo.inserir_integrante(novo_integrante)
-    
+
     request.session.setdefault("flash_messages", []).append({"message": "Integrante adicionado com sucesso!", "type": "success"})
     return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -134,21 +116,21 @@ async def editar_integrante(
     redes_sociais: Optional[str] = Form(None),
     _=Depends(verificar_login_admin)
 ):
-    integrante_existente = integrante_repo.obter_integrante_por_id(id_integrante)
-    if not integrante_existente:
+    integrante = integrante_repo.obter_integrante_por_id(id_integrante)
+    if not integrante:
         request.session.setdefault("flash_messages", []).append({"message": "Integrante não encontrado.", "type": "danger"})
         return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
 
-    foto_url = integrante_existente.foto
+    foto_url = integrante.foto
     if foto_file and foto_file.filename:
         file_path = os.path.join(uploads_dir, foto_file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(foto_file.file, buffer)
         foto_url = f"/static/{foto_file.filename}"
-        
+
     integrante_atualizado = Integrante(id=id_integrante, nome=nome, turma=turma, funcao=funcao, foto=foto_url, redes_sociais=redes_sociais)
     integrante_repo.alterar_integrante(integrante_atualizado)
-    
+
     request.session.setdefault("flash_messages", []).append({"message": "Integrante atualizado com sucesso!", "type": "success"})
     return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -157,32 +139,24 @@ async def excluir_integrante(request: Request, id_integrante: int, _=Depends(ver
     integrante = integrante_repo.obter_integrante_por_id(id_integrante)
     if integrante and integrante.foto:
         try:
-            file_name = integrante.foto.split('/')[-1]
-            file_path = os.path.join(uploads_dir, file_name)
-            os.remove(file_path)
-        except OSError as e:
-            print(f"Erro ao tentar remover a foto: {e.filename} - {e.strerror}")
-
-    if integrante_repo.excluir_integrante(id_integrante):
-        request.session.setdefault("flash_messages", []).append({"message": "Integrante excluído com sucesso!", "type": "success"})
-    else:
-        request.session.setdefault("flash_messages", []).append({"message": "Erro ao excluir integrante.", "type": "danger"})
-        
+            file_name = integrante.foto.split("/")[-1]
+            os.remove(os.path.join(uploads_dir, file_name))
+        except OSError:
+            pass
+    integrante_repo.excluir_integrante(id_integrante)
+    request.session.setdefault("flash_messages", []).append({"message": "Integrante excluído!", "type": "success"})
     return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
 
-# --- Rotas para Experimentos (CRUD) ---
+# --- ADMIN EXPERIMENTOS ---
 
 @app.get("/admin/experimentos", response_class=HTMLResponse)
 async def listar_experimentos(request: Request, _=Depends(verificar_login_admin)):
     experimentos = experimento_repo.obter_todos_experimentos()
-    
-    context = {
+    return templates.TemplateResponse("/admin/experimentos_dashboard.html", {
         "request": request,
         "experimentos": experimentos,
-        "flash_messages": get_flash_messages(request),
-    }
-    return templates.TemplateResponse("/admin/experimentos_dashboard.html", context)
-
+        "flash_messages": get_flash_messages(request)
+    })
 
 @app.post("/admin/experimentos", response_class=RedirectResponse)
 async def adicionar_experimento(
@@ -194,22 +168,16 @@ async def adicionar_experimento(
     video_explicativo: Optional[str] = Form(None),
     _=Depends(verificar_login_admin)
 ):
-    if not capa_file or not capa_file.filename:
-        request.session.setdefault("flash_messages", []).append({"message": "A capa do experimento é obrigatória.", "type": "danger"})
-        return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
-
     file_path = os.path.join(uploads_dir, capa_file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(capa_file.file, buffer)
-        
     capa_url = f"/static/{capa_file.filename}"
-    
+
     novo_experimento = Experimento(id=None, titulo=titulo, descricao=descricao, materiais=materiais, capa=capa_url, video_explicativo=video_explicativo)
     experimento_repo.inserir_experimento(novo_experimento)
-    
+
     request.session.setdefault("flash_messages", []).append({"message": "Experimento adicionado com sucesso!", "type": "success"})
     return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
-
 
 @app.post("/admin/experimentos/editar/{id_experimento}", response_class=RedirectResponse)
 async def editar_experimento(
@@ -222,21 +190,18 @@ async def editar_experimento(
     video_explicativo: Optional[str] = Form(None),
     _=Depends(verificar_login_admin)
 ):
-    experimento_existente = experimento_repo.obter_experimento_por_id(id_experimento)
-    if not experimento_existente:
-        request.session.setdefault("flash_messages", []).append({"message": "Experimento não encontrado.", "type": "danger"})
-        return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
-
-    capa_url = experimento_existente.capa
+    experimento = experimento_repo.obter_experimento_por_id(id_experimento)
     if capa_file and capa_file.filename:
         file_path = os.path.join(uploads_dir, capa_file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(capa_file.file, buffer)
         capa_url = f"/static/{capa_file.filename}"
-        
+    else:
+        capa_url = experimento.capa
+
     experimento_atualizado = Experimento(id=id_experimento, titulo=titulo, descricao=descricao, materiais=materiais, capa=capa_url, video_explicativo=video_explicativo)
     experimento_repo.alterar_experimento(experimento_atualizado)
-    
+
     request.session.setdefault("flash_messages", []).append({"message": "Experimento atualizado com sucesso!", "type": "success"})
     return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -245,57 +210,47 @@ async def excluir_experimento(request: Request, id_experimento: int, _=Depends(v
     experimento = experimento_repo.obter_experimento_por_id(id_experimento)
     if experimento and experimento.capa:
         try:
-            file_name = experimento.capa.split('/')[-1]
-            file_path = os.path.join(uploads_dir, file_name)
-            os.remove(file_path)
-        except OSError as e:
-            print(f"Erro ao tentar remover a capa: {e.filename} - {e.strerror}")
-
-    if experimento_repo.excluir_experimento(id_experimento):
-        request.session.setdefault("flash_messages", []).append({"message": "Experimento excluído com sucesso!", "type": "success"})
-    else:
-        request.session.setdefault("flash_messages", []).append({"message": "Erro ao excluir experimento.", "type": "danger"})
-        
+            file_name = experimento.capa.split("/")[-1]
+            os.remove(os.path.join(uploads_dir, file_name))
+        except OSError:
+            pass
+    experimento_repo.excluir_experimento(id_experimento)
+    request.session.setdefault("flash_messages", []).append({"message": "Experimento excluído!", "type": "success"})
     return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
 
-# --- Rotas para a Área do Cliente ---
+# --- CLIENTE ---
 
-# A rota de cliente agora pode ser acessada diretamente por sua URL
-@app.get("/cliente", response_class=HTMLResponse)
-async def inicio_cliente_route(request: Request):
+@app.get("/", response_class=HTMLResponse)
+async def index_cliente(request: Request):
     info_projeto = {
         "titulo": "Sobre o Projeto IFES Ciência",
-        "texto": "O projeto 'Ifes Ciência' do campus Cachoeiro, iniciado em setembro de 2024, mostra experiências científicas curiosas e tem alcançado destaque nacional. A equipe consegue manter uma frequência de postagens constante, pois a maior parte do conteúdo é gravada com antecedência, com a produção de cada vídeo levando cerca de 15 dias.",
+        "texto": "O projeto 'IFES Ciência', iniciado em setembro de 2024, visa apresentar experiências científicas curiosas. A equipe produz conteúdo antecipadamente, e cada vídeo leva cerca de 15 dias para ser finalizado. O projeto já ganhou destaque nacional por sua qualidade e dedicação.",
     }
-    context = {
+    return templates.TemplateResponse("/cliente/index.html", {
         "request": request,
         "info_projeto": info_projeto,
-        "flash_messages": get_flash_messages(request),
-    }
-    return templates.TemplateResponse("/cliente/index.html", context)
+        "flash_messages": get_flash_messages(request)
+    })
 
 @app.get("/cliente/sobre_nos", response_class=HTMLResponse)
 async def sobre_nos_cliente(request: Request):
     integrantes = integrante_repo.obter_todos_integrantes()
-    context = {
+    return templates.TemplateResponse("/cliente/sobre_nos.html", {
         "request": request,
         "integrantes": integrantes,
-        "flash_messages": get_flash_messages(request),
-    }
-    return templates.TemplateResponse("/cliente/sobre_nos.html", context)
+        "flash_messages": get_flash_messages(request)
+    })
 
 @app.get("/cliente/experimentos", response_class=HTMLResponse)
 async def experimentos_cliente(request: Request):
     experimentos = experimento_repo.obter_todos_experimentos()
-    context = {
+    return templates.TemplateResponse("/cliente/experimentos.html", {
         "request": request,
         "experimentos": experimentos,
-        "flash_messages": get_flash_messages(request),
-    }
-    return templates.TemplateResponse("/cliente/experimentos.html", context)
+        "flash_messages": get_flash_messages(request)
+    })
 
-# --- Eventos de Inicialização ---
-
+# --- Startup ---
 @app.on_event("startup")
 async def startup_event():
     criar_admin_inicial()

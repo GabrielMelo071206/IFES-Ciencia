@@ -1,136 +1,141 @@
 {% extends "admin/layout.html" %}
 
-{% block title %}Dashboard | Integrantes{% endblock %}
-
 {% block content %}
-    <h1 class="h3 mb-4">Gerenciar Integrantes</h1>
+<div class="container my-5">
+    <h1 class="mb-4">Gestão de Integrantes</h1>
 
-    {% if flash_messages %}
-        {% for message in flash_messages %}
-        <div class="alert alert-{{ message.type }}" role="alert">
-            {{ message.message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-
-    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#adicionarIntegranteModal">
-        Adicionar Novo Integrante
-    </button>
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Foto</th>
-                    <th scope="col">Nome</th>
-                    <th scope="col">Turma</th>
-                    <th scope="col">Função</th>
-                    <th scope="col">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for integrante in integrantes %}
-                <tr>
-                    <th scope="row">{{ integrante.id }}</th>
-                    <td>
-                        {% if integrante.foto %}
-                        <img src="{{ url_for('uploads', path=integrante.foto|replace('/static/', '', 1)) }}" alt="Foto de {{ integrante.nome }}" class="img-thumbnail" style="width: 50px; height: 50px;">
-                        {% else %}
-                        <img src="{{ url_for('static', path='default.png') }}" alt="Foto padrão" class="img-thumbnail" style="width: 50px; height: 50px;">
-                        {% endif %}
-                    </td>
-                    <td>{{ integrante.nome }}</td>
-                    <td>{{ integrante.turma }}</td>
-                    <td>{{ integrante.funcao }}</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editarIntegranteModal-{{ integrante.id }}">
-                            Editar
-                        </button>
-                        <form action="/admin/integrantes/excluir/{{ integrante.id }}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este integrante?');">
-                                Excluir
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="modal fade" id="adicionarIntegranteModal" tabindex="-1" aria-labelledby="adicionarIntegranteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="adicionarIntegranteModalLabel">Adicionar Integrante</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="/admin/integrantes" method="post" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="nome" class="form-label">Nome</label>
-                            <input type="text" class="form-control" id="nome" name="nome" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="turma" class="form-label">Turma</label>
-                            <input type="text" class="form-control" id="turma" name="turma" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="funcao" class="form-label">Função</label>
-                            <input type="text" class="form-control" id="funcao" name="funcao" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="foto_file" class="form-label">Foto</label>
-                            <input type="file" class="form-control" id="foto_file" name="foto_file" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="redes_sociais" class="form-label">Redes Sociais (URL)</label>
-                            <input type="text" class="form-control" id="redes_sociais" name="redes_sociais">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Adicionar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    {% for integrante in integrantes %}
-    <div class="modal fade" id="editarIntegranteModal-{{ integrante.id }}" tabindex="-1" aria-labelledby="editarIntegranteModalLabel-{{ integrante.id }}" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editarIntegranteModalLabel-{{ integrante.id }}">Editar Integrante</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="/admin/integrantes/editar/{{ integrante.id }}" method="post" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="nome-{{ integrante.id }}" class="form-label">Nome</label>
-                            <input type="text" class="form-control" id="nome-{{ integrante.id }}" name="nome" value="{{ integrante.nome }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="turma-{{ integrante.id }}" class="form-label">Turma</label>
-                            <input type="text" class="form-control" id="turma-{{ integrante.id }}" name="turma" value="{{ integrante.turma }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="funcao-{{ integrante.id }}" class="form-label">Função</label>
-                            <input type="text" class="form-control" id="funcao-{{ integrante.id }}" name="funcao" value="{{ integrante.funcao }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="foto_file-{{ integrante.id }}" class="form-label">Nova Foto (opcional)</label>
-                            <input type="file" class="form-control" id="foto_file-{{ integrante.id }}" name="foto_file">
-                            <small class="form-text text-muted">A foto atual será substituída se você selecionar uma nova.</small>
-                        </div>
-                        <div class="mb-3">
-                            <label for="redes_sociais-{{ integrante.id }}" class="form-label">Redes Sociais (URL)</label>
-                            <input type="text" class="form-control" id="redes_sociais-{{ integrante.id }}" name="redes_sociais" value="{{ integrante.redes_sociais or '' }}">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+    <!-- Flash Messages -->
+    {% for msg in flash_messages %}
+    <div class="alert alert-{{ msg.type }} alert-dismissible fade show" role="alert">
+        {{ msg.message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endfor %}
+
+    <!-- Botão Adicionar Integrante -->
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalAdicionarIntegrante">
+        Adicionar Integrante
+    </button>
+
+    <!-- Tabela de Integrantes -->
+    <table class="table table-striped table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nome</th>
+                <th>Função</th>
+                <th>Turma</th>
+                <th>Redes Sociais</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for integrante in integrantes %}
+            <tr>
+                <td><img src="{{ integrante.foto }}" alt="{{ integrante.nome }}" width="50" class="rounded-circle"></td>
+                <td>{{ integrante.nome }}</td>
+                <td>{{ integrante.funcao }}</td>
+                <td>{{ integrante.turma }}</td>
+                <td>
+                    {% if integrante.redes_sociais %}
+                    <a href="{{ integrante.redes_sociais }}" target="_blank">Link</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Editar -->
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditarIntegrante{{ integrante.id }}">
+                        Editar
+                    </button>
+                    <!-- Excluir -->
+                    <form action="/admin/integrantes/excluir/{{ integrante.id }}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+
+            <!-- Modal Editar Integrante -->
+            <div class="modal fade" id="modalEditarIntegrante{{ integrante.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form action="/admin/integrantes/editar/{{ integrante.id }}" method="post" enctype="multipart/form-data">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Editar Integrante</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Nome</label>
+                                    <input type="text" class="form-control" name="nome" value="{{ integrante.nome }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Função</label>
+                                    <input type="text" class="form-control" name="funcao" value="{{ integrante.funcao }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Turma</label>
+                                    <input type="text" class="form-control" name="turma" value="{{ integrante.turma }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Redes Sociais</label>
+                                    <input type="url" class="form-control" name="redes_sociais" value="{{ integrante.redes_sociais }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Foto (opcional)</label>
+                                    <input type="file" class="form-control" name="foto_file">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Adicionar Integrante -->
+<div class="modal fade" id="modalAdicionarIntegrante" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/admin/integrantes" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Integrante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" class="form-control" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Função</label>
+                        <input type="text" class="form-control" name="funcao" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Turma</label>
+                        <input type="text" class="form-control" name="turma" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Redes Sociais</label>
+                        <input type="url" class="form-control" name="redes_sociais">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Foto</label>
+                        <input type="file" class="form-control" name="foto_file" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Adicionar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
