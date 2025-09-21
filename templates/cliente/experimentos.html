@@ -1,0 +1,28 @@
+{% extends "cliente/layout_cliente.html" %}
+
+{% block title %}Experimentos | IFES Ciência{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Experimentos</h1>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for experimento in experimentos %}
+        <div class="col">
+            <div class="card h-100">
+                <img src="{{ url_for('uploads', path=experimento.capa|replace('/static/', '', 1)) }}" class="card-img-top" alt="Capa de {{ experimento.titulo }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ experimento.titulo }}</h5>
+                    <p class="card-text">{{ experimento.descricao[:100] }}...</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Materiais: {{ experimento.materiais }}</li>
+                </ul>
+                <div class="card-body">
+                    {% if experimento.video_explicativo %}
+                    <a href="{{ experimento.video_explicativo }}" target="_blank" class="btn btn-primary">Ver Vídeo</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "cliente/layout_cliente.html" %}
+
+{% block title %}Sobre Nós | IFES Ciência{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Nossa Equipe</h1>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for integrante in integrantes %}
+        <div class="col">
+            <div class="card h-100 text-center">
+                <img src="{{ url_for('uploads', path=integrante.foto|replace('/static/', '', 1)) }}" class="card-img-top mx-auto d-block" alt="Foto de {{ integrante.nome }}" style="width: 200px; height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ integrante.nome }}</h5>
+                    <p class="card-text">{{ integrante.funcao }} - {{ integrante.turma }}</p>
+                    {% if integrante.redes_sociais %}
+                    <a href="{{ integrante.redes_sociais }}" target="_blank" class="btn btn-sm btn-info">Redes Sociais</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

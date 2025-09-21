@@ -1,0 +1,136 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard | Experimentos{% endblock %}
+
+{% block content %}
+    <h1 class="h3 mb-4">Gerenciar Experimentos</h1>
+
+    {% if flash_messages %}
+        {% for message in flash_messages %}
+        <div class="alert alert-{{ message.type }}" role="alert">
+            {{ message.message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#adicionarExperimentoModal">
+        Adicionar Novo Experimento
+    </button>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Capa</th>
+                    <th scope="col">Título</th>
+                    <th scope="col">Descrição</th>
+                    <th scope="col">Materiais</th>
+                    <th scope="col">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for experimento in experimentos %}
+                <tr>
+                    <th scope="row">{{ experimento.id }}</th>
+                    <td>
+                        {% if experimento.capa %}
+                        <img src="{{ url_for('uploads', path=experimento.capa|replace('/static/', '', 1)) }}" alt="Capa de {{ experimento.titulo }}" class="img-thumbnail" style="width: 50px; height: 50px;">
+                        {% else %}
+                        <img src="{{ url_for('uploads', path='default.png') }}" alt="Capa padrão" class="img-thumbnail" style="width: 50px; height: 50px;">
+                        {% endif %}
+                    </td>
+                    <td>{{ experimento.titulo }}</td>
+                    <td>{{ experimento.descricao }}</td>
+                    <td>{{ experimento.materiais }}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editarExperimentoModal-{{ experimento.id }}">
+                            Editar
+                        </button>
+                        <form action="/admin/experimentos/excluir/{{ experimento.id }}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este experimento?');">
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="adicionarExperimentoModal" tabindex="-1" aria-labelledby="adicionarExperimentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adicionarExperimentoModalLabel">Adicionar Experimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/admin/experimentos" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="materiais" class="form-label">Materiais</label>
+                            <textarea class="form-control" id="materiais" name="materiais" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="capa_file" class="form-label">Capa</label>
+                            <input type="file" class="form-control" id="capa_file" name="capa_file" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="video_explicativo" class="form-label">URL do Vídeo Explicativo</label>
+                            <input type="text" class="form-control" id="video_explicativo" name="video_explicativo">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Adicionar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% for experimento in experimentos %}
+    <div class="modal fade" id="editarExperimentoModal-{{ experimento.id }}" tabindex="-1" aria-labelledby="editarExperimentoModalLabel-{{ experimento.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarExperimentoModalLabel-{{ experimento.id }}">Editar Experimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/admin/experimentos/editar/{{ experimento.id }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="titulo-{{ experimento.id }}" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="titulo-{{ experimento.id }}" name="titulo" value="{{ experimento.titulo }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descricao-{{ experimento.id }}" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao-{{ experimento.id }}" name="descricao" required>{{ experimento.descricao }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="materiais-{{ experimento.id }}" class="form-label">Materiais</label>
+                            <textarea class="form-control" id="materiais-{{ experimento.id }}" name="materiais" required>{{ experimento.materiais }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="capa_file-{{ experimento.id }}" class="form-label">Nova Capa (opcional)</label>
+                            <input type="file" class="form-control" id="capa_file-{{ experimento.id }}" name="capa_file">
+                            <small class="form-text text-muted">A capa atual será substituída se você selecionar uma nova.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="video_explicativo-{{ experimento.id }}" class="form-label">URL do Vídeo Explicativo</label>
+                            <input type="text" class="form-control" id="video_explicativo-{{ experimento.id }}" name="video_explicativo" value="{{ experimento.video_explicativo or '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endblock %}
