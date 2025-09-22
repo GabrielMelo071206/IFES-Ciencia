@@ -1,608 +1,812 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experimentos | IFES Ciência</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experimentos | IFES Ciência</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto+Slab:wght@400;500;600;700&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-            overflow-x: hidden;
-        }
+:root {
+  --ifes-green: #2E7D32;
+  --ifes-light-green: #4CAF50;
+  --ifes-dark-green: #1B5E20;
+  --ifes-orange: #FF6F00;
+  --ifes-light-orange: #FF8F00;
+  --ifes-gray: #37474F;
+  --ifes-light-gray: #546E7A;
+  --science-blue: #0277BD;
+  --science-purple: #7B1FA2;
+}
 
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, var(--ifes-green) 0%, var(--ifes-dark-green) 50%, var(--science-blue) 100%);
+  color: #333;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
 
-        .navbar.scrolled {
-            background: rgba(255, 255, 255, 0.98);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        }
+.navbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 2px solid var(--ifes-green);
+  box-shadow: 0 8px 32px rgba(46, 125, 50, 0.1);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
 
-        .navbar .navbar-brand {
-            color: #667eea !important;
-            font-weight: 800;
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
-        }
+.navbar.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8px 32px rgba(46, 125, 50, 0.15);
+}
 
-        .navbar .navbar-brand:hover {
-            color: #764ba2 !important;
-            transform: scale(1.05);
-        }
+.navbar .navbar-brand {
+  color: var(--ifes-green);
+  font-weight: 800;
+  font-size: 1.8rem;
+  font-family: 'Roboto Slab', serif;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+}
 
-        .navbar .nav-link {
-            color: #667eea !important;
-            margin-left: 1rem;
-            font-weight: 500;
-            position: relative;
-            transition: all 0.3s ease;
-        }
+.navbar .navbar-brand i {
+  background: linear-gradient(45deg, var(--ifes-green), var(--science-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-right: 0.5rem;
+  font-size: 2rem;
+}
 
-        .navbar .nav-link:hover {
-            color: #764ba2 !important;
-            transform: translateY(-2px);
-        }
+.navbar .navbar-brand:hover {
+  color: var(--ifes-orange);
+  transform: scale(1.05);
+}
 
-        .navbar .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -5px;
-            left: 50%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
 
-        .navbar .nav-link:hover::after {
-            width: 80%;
-        }
+.navbar .nav-link {
+  color: var(--ifes-green);
+  margin-left: 1rem;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
 
-        .page-header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 3rem 2rem;
-            margin: 8rem 1rem 3rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        }
+.navbar .nav-link:hover {
+  color: var(--ifes-orange);
+  transform: translateY(-2px);
+}
 
-        .page-title {
-            font-size: 3rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 1rem;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
+.navbar .nav-link.active {
+  color: var(--ifes-orange);
+}
 
-        .page-subtitle {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.9);
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
+.navbar .nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 3px;
+  bottom: -5px;
+  left: 50%;
+  background: linear-gradient(90deg, var(--ifes-orange), var(--ifes-light-orange));
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
 
-        .main-content {
-            background: white;
-            border-radius: 30px 30px 0 0;
-            margin-top: 2rem;
-            padding: 4rem 0;
-            position: relative;
-        }
+.navbar .nav-link:hover::after,
+.navbar .nav-link.active::after {
+  width: 80%;
+}
 
-        .experiment-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            overflow: hidden;
-            position: relative;
-            height: 100%;
-        }
+.floating-elements {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
 
-        .experiment-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: all 0.6s ease;
-            z-index: 1;
-        }
+.floating-element {
+  position: absolute;
+  background: rgba(46, 125, 50, 0.1);
+  border-radius: 50%;
+  animation: floatRandom 20s ease-in-out infinite;
+}
 
-        .experiment-card:hover::before {
-            left: 100%;
-        }
+.floating-element:nth-child(1) {
+  width: 80px;
+  height: 80px;
+  top: 15%;
+  left: 8%;
+  animation-delay: 0s;
+  background: rgba(255, 111, 0, 0.1);
+}
 
-        .experiment-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        }
+.floating-element:nth-child(2) {
+  width: 60px;
+  height: 60px;
+  top: 55%;
+  right: 12%;
+  animation-delay: 7s;
+  background: rgba(2, 119, 189, 0.1);
+}
 
-        .experiment-card img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-            transition: all 0.4s ease;
-        }
+.floating-element:nth-child(3) {
+  width: 100px;
+  height: 100px;
+  bottom: 18%;
+  left: 15%;
+  animation-delay: 14s;
+  background: rgba(123, 31, 162, 0.1);
+}
 
-        .experiment-card:hover img {
-            transform: scale(1.05);
-        }
+@keyframes floatRandom {
+  0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+  25% { transform: translateY(-30px) translateX(20px) rotate(90deg); }
+  50% { transform: translateY(-15px) translateX(-25px) rotate(180deg); }
+  75% { transform: translateY(-40px) translateX(10px) rotate(270deg); }
+}
 
-        .card-body {
-            padding: 2rem;
-            position: relative;
-            z-index: 2;
-        }
+.page-header {
+  padding: 8rem 0 4rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
 
-        .card-title {
-            color: #667eea;
-            font-weight: 700;
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-        }
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, 
+    rgba(46, 125, 50, 0.9) 0%, 
+    rgba(27, 94, 32, 0.9) 30%,
+    rgba(2, 119, 189, 0.9) 70%,
+    rgba(123, 31, 162, 0.9) 100%);
+  z-index: 1;
+}
 
-        .btn-details {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            color: white;
-            padding: 0.8rem 2rem;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-        }
+.page-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  z-index: 2;
+}
 
-        .btn-details::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #764ba2, #667eea);
-            transition: all 0.3s ease;
-            z-index: -1;
-        }
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
 
-        .btn-details:hover::before {
-            left: 0;
-        }
+.page-header .container {
+  position: relative;
+  z-index: 3;
+}
 
-        .btn-details:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-            color: white;
-        }
+.page-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  font-family: 'Roboto Slab', serif;
+  background: linear-gradient(45deg, #ffffff, #f0f8ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
-        .modal-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        }
+.page-subtitle {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.95);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
+  font-weight: 400;
+}
 
-        .modal-header {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 2rem 2rem 1rem;
-        }
+.ifes-badge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(45deg, var(--ifes-green), var(--ifes-light-green));
+  color: white;
+  padding: 0.7rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 8px 25px rgba(46, 125, 50, 0.3);
+}
 
-        .modal-title {
-            color: #667eea;
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
+.ifes-badge i {
+  margin-right: 0.7rem;
+  font-size: 1.2rem;
+}
 
-        .modal-body {
-            padding: 1rem 2rem 2rem;
-        }
+.main-content {
+  background: white;
+  position: relative;
+  z-index: 10;
+  border-radius: 30px 30px 0 0;
+  margin-top: -30px;
+  padding: 4rem 0;
+}
 
-        .modal-body img {
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
+.experiment-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  border: 2px solid rgba(46, 125, 50, 0.1);
+  box-shadow: 0 15px 35px rgba(46, 125, 50, 0.1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
 
-        .modal-body h6 {
-            color: #667eea;
-            font-weight: 700;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
+.experiment-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(46, 125, 50, 0.05), transparent);
+  transition: all 0.6s ease;
+}
 
-        .modal-body p {
-            line-height: 1.7;
-            color: #555;
-            margin-bottom: 1rem;
-        }
+.experiment-card:hover::before {
+  left: 100%;
+}
 
-        .btn-video {
-            background: linear-gradient(135deg, #ff6b6b, #ffa726);
-            border: none;
-            color: white;
-            padding: 0.7rem 1.5rem;
-            border-radius: 25px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
+.experiment-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(46, 125, 50, 0.15);
+  border-color: var(--ifes-green);
+}
 
-        .btn-video:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
-            color: white;
-            text-decoration: none;
-        }
+.experiment-image {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 18px 18px 0 0;
+}
 
-        .modal-footer {
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 1rem 2rem 2rem;
-        }
+.card-body {
+  padding: 2rem;
+}
 
-        .btn-close-modal {
-            background: #6c757d;
-            border: none;
-            color: white;
-            padding: 0.7rem 1.5rem;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
+.experiment-title {
+  color: var(--ifes-green);
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-family: 'Roboto Slab', serif;
+}
 
-        .btn-close-modal:hover {
-            background: #495057;
-            transform: translateY(-2px);
-            color: white;
-        }
+.btn-custom {
+  background: linear-gradient(135deg, var(--ifes-green), var(--ifes-light-green));
+  border: none;
+  color: white;
+  padding: 0.8rem 2rem;
+  border-radius: 25px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.9rem;
+  width: 100%;
+}
 
-        .floating-elements {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
+.btn-custom:hover::before {
+  left: 0;
+}
 
-        .floating-element {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: floatRandom 15s ease-in-out infinite;
-        }
+.btn-custom:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(46, 125, 50, 0.4);
+  color: white;
+}
 
-        .floating-element:nth-child(1) {
-            width: 60px;
-            height: 60px;
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
+.modal-content {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
 
-        .floating-element:nth-child(2) {
-            width: 40px;
-            height: 40px;
-            top: 60%;
-            right: 15%;
-            animation-delay: 5s;
-        }
+.modal-header {
+  background: linear-gradient(135deg, var(--ifes-green), var(--ifes-light-green));
+  color: white;
+  border-bottom: none;
+  padding: 1.5rem 2rem;
+}
 
-        .floating-element:nth-child(3) {
-            width: 80px;
-            height: 80px;
-            bottom: 20%;
-            left: 20%;
-            animation-delay: 10s;
-        }
+.modal-title {
+  font-weight: 700;
+  font-family: 'Roboto Slab', serif;
+  font-size: 1.4rem;
+}
 
-        @keyframes floatRandom {
-            0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-            25% { transform: translateY(-20px) translateX(10px) rotate(90deg); }
-            50% { transform: translateY(-10px) translateX(-15px) rotate(180deg); }
-            75% { transform: translateY(-30px) translateX(5px) rotate(270deg); }
-        }
+.btn-close {
+  filter: brightness(0) invert(1);
+}
 
-        .search-filter-section {
-            padding: 2rem 0;
-            text-align: center;
-        }
+.modal-body {
+  padding: 2rem;
+}
 
-        .search-box {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            backdrop-filter: blur(20px);
-            max-width: 400px;
-            width: 100%;
-        }
+.modal-body img {
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
 
-        .search-box:focus {
-            outline: none;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-            border-color: #667eea;
-        }
+.modal-body h6 {
+  color: var(--ifes-green);
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+  font-family: 'Roboto Slab', serif;
+  font-size: 1.1rem;
+}
 
-        @media (max-width: 768px) {
-            .page-title {
-                font-size: 2rem;
-            }
-            
-            .page-subtitle {
-                font-size: 1rem;
-            }
-            
-            .page-header {
-                margin: 6rem 1rem 2rem;
-                padding: 2rem 1rem;
-            }
-        }
+.modal-body p {
+  line-height: 1.7;
+  color: var(--ifes-gray);
+}
 
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-        }
+.modal-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 2rem;
+  background: rgba(248, 249, 250, 0.5);
+}
 
-        .spinner-border {
-            color: #667eea;
-        }
+.btn-outline-secondary {
+  border-color: var(--ifes-green);
+  color: var(--ifes-green);
+  font-weight: 600;
+  border-radius: 25px;
+  padding: 0.7rem 1.5rem;
+  transition: all 0.3s ease;
+}
 
-        .no-experiments {
-            display: none;
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
+.btn-outline-secondary:hover {
+  background: var(--ifes-green);
+  border-color: var(--ifes-green);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+}
 
-        .no-experiments i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-    </style>
+.btn-secondary {
+  background: linear-gradient(135deg, var(--ifes-gray), var(--ifes-light-gray));
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 25px;
+  padding: 0.7rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, var(--ifes-light-gray), var(--ifes-gray));
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(55, 71, 79, 0.3);
+}
+
+.footer-section {
+  background: linear-gradient(135deg, var(--ifes-gray), var(--ifes-dark-green));
+  color: white;
+  padding: 4rem 0 2rem;
+  position: relative;
+  margin-top: 4rem;
+}
+
+.footer-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="footerGrid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23footerGrid)"/></svg>');
+  opacity: 0.5;
+}
+
+.footer-brand h4 {
+  color: white;
+  font-weight: 800;
+  font-family: 'Roboto Slab', serif;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-brand h4 i {
+  background: linear-gradient(45deg, var(--ifes-orange), var(--ifes-light-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-description {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-title {
+  color: var(--ifes-orange);
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-links li {
+  margin-bottom: 0.8rem;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.footer-links a:hover {
+  color: var(--ifes-orange);
+  transform: translateX(5px);
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.social-link {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(45deg, var(--ifes-green), var(--ifes-light-green));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.social-link:hover {
+  background: linear-gradient(45deg, var(--ifes-orange), var(--ifes-light-orange));
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 111, 0, 0.4);
+  color: white;
+}
+
+.footer-divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  margin: 2.5rem 0 1.5rem;
+}
+
+.copyright {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 2;
+}
+
+.footer-badge {
+  background: linear-gradient(45deg, var(--ifes-orange), var(--ifes-light-orange));
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2.5rem;
+  }
+  
+  .page-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .navbar .navbar-brand {
+    font-size: 1.5rem;
+  }
+  
+  .experiment-image {
+    height: 200px;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
 </head>
 <body>
 
 <div class="floating-elements">
-    <div class="floating-element"></div>
-    <div class="floating-element"></div>
-    <div class="floating-element"></div>
+  <div class="floating-element"></div>
+  <div class="floating-element"></div>
+  <div class="floating-element"></div>
 </div>
 
 <nav class="navbar navbar-expand-lg" id="mainNavbar">
-    <div class="container">
-        <a class="navbar-brand" href="/"><i class="fas fa-atom me-2"></i>IFES Ciência</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Início</a></li>
-                <li class="nav-item"><a class="nav-link" href="/cliente/experimentos"><i class="fas fa-flask me-1"></i>Experimentos</a></li>
-                <li class="nav-item"><a class="nav-link" href="/cliente/sobre_nos"><i class="fas fa-users me-1"></i>Sobre Nós</a></li>
-            </ul>
-        </div>
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-atom"></i>
+      IFES Ciência
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Início</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/cliente/experimentos"><i class="fas fa-flask me-1"></i>Experimentos</a></li>
+        <li class="nav-item"><a class="nav-link" href="/cliente/sobre_nos"><i class="fas fa-users me-1"></i>Sobre Nós</a></li>
+      </ul>
     </div>
+  </div>
 </nav>
 
-<div class="container">
-    <div class="page-header">
-        <h1 class="page-title"><i class="fas fa-flask me-3"></i>Experimentos</h1>
-        <p class="page-subtitle">Explore nossa coleção de experimentos científicos seguros e educativos. Cada experimento foi cuidadosamente desenvolvido para estimular a curiosidade e o aprendizado.</p>
-    </div>
-</div>
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-title">Nossos Experimentos</h1>
+    <p class="page-subtitle">Descubra a ciência através de experimentos práticos e seguros, desenvolvidos pelos professores e estudantes do IFES para despertar sua curiosidade científica.</p>
+  </div>
+</section>
 
 <div class="main-content">
-    <div class="container">
-        <div class="search-filter-section">
-            <input type="text" class="search-box" id="searchExperiments" placeholder="🔍 Buscar experimentos...">
-        </div>
-
-        <div class="loading-spinner" id="loadingSpinner">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Carregando...</span>
+  <div class="container">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for experimento in experimentos %}
+        <div class="col">
+          <div class="experiment-card">
+            <img src="{{ experimento.capa }}" class="experiment-image" alt="{{ experimento.titulo }}">
+            <div class="card-body">
+              <h5 class="experiment-title">{{ experimento.titulo }}</h5>
+              <a href="/cliente/experimentos/{{ experimento.id }}" class="btn-custom">
+                <i class="fas fa-microscope me-2"></i>Ver Experimento
+              </a>
             </div>
-            <p class="mt-2">Carregando experimentos...</p>
+          </div>
         </div>
-
-        <div class="no-experiments" id="noExperiments">
-            <i class="fas fa-search"></i>
-            <h4>Nenhum experimento encontrado</h4>
-            <p>Tente ajustar sua busca ou explore outros termos.</p>
-        </div>
-
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="experimentsContainer">
-            {% for experimento in experimentos %}
-            <div class="col experiment-item" data-title="{{ experimento.titulo|lower }}" data-description="{{ experimento.descricao|lower }}">
-                <div class="card experiment-card h-100">
-                    <img src="{{ experimento.capa }}" class="card-img-top" alt="{{ experimento.titulo }}">
-                    <div class="card-body text-center d-flex flex-column">
-                        <h5 class="card-title">{{ experimento.titulo }}</h5>
-                        <div class="mt-auto">
-                            <button class="btn btn-details" data-bs-toggle="modal" data-bs-target="#detalhesModal{{ experimento.id }}">
-                                <i class="fas fa-eye me-2"></i>Ver Detalhes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal de Detalhes -->
-            <div class="modal fade" id="detalhesModal{{ experimento.id }}" tabindex="-1" aria-labelledby="modalLabel{{ experimento.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalLabel{{ experimento.id }}">{{ experimento.titulo }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <img src="{{ experimento.capa }}" class="img-fluid mb-3" alt="{{ experimento.titulo }}">
-                            <h6><i class="fas fa-info-circle me-2"></i>Descrição:</h6>
-                            <p>{{ experimento.descricao }}</p>
-                            <h6><i class="fas fa-list me-2"></i>Materiais:</h6>
-                            <p>{{ experimento.materiais }}</p>
-                            {% if experimento.video_explicativo %}
-                            <h6><i class="fas fa-play-circle me-2"></i>Vídeo Explicativo:</h6>
-                            <a href="{{ experimento.video_explicativo }}" target="_blank" class="btn-video">
-                                <i class="fas fa-external-link-alt"></i>
-                                Assistir Vídeo
-                            </a>
-                            {% endif %}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-close-modal" data-bs-dismiss="modal">
-                                <i class="fas fa-times me-2"></i>Fechar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+      {% endfor %}
     </div>
+  </div>
 </div>
+
+<footer class="footer-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <div class="footer-brand">
+          <h4><i class="fas fa-atom me-2"></i>IFES Ciência</h4>
+          <p class="footer-description">
+            Promovendo a educação científica através de experimentos práticos e seguros, 
+            conectando o IFES com a comunidade capixaba.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h5 class="footer-title">Navegação</h5>
+        <ul class="footer-links">
+          <li><a href="/"><i class="fas fa-home me-2"></i>Início</a></li>
+          <li><a href="/cliente/experimentos"><i class="fas fa-flask me-2"></i>Experimentos</a></li>
+          <li><a href="/cliente/sobre_nos"><i class="fas fa-users me-2"></i>Sobre Nós</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h5 class="footer-title">IFES</h5>
+        <ul class="footer-links">
+          <li><a href="https://ifes.edu.br" target="_blank"><i class="fas fa-university me-2"></i>Site Oficial</a></li>
+          <li><a href="https://cachoeiro.ifes.edu.br/"><i class="fas fa-map-marker-alt me-2"></i>Campi IFES</a></li>
+          <li><a href="https://cachoeiro.ifes.edu.br/cursos"><i class="fas fa-graduation-cap me-2"></i>Cursos</a></li>
+        </ul>
+      </div>
+      <div class="col-md-2 mb-4">
+        <h5 class="footer-title">Redes Sociais</h5>
+        <div class="social-links">
+          <a href="https://www.youtube.com/@IFESCi%C3%AAncia/featured" class="social-link"><i class="fab fa-youtube"></i></a>
+          <a href="https://www.instagram.com/ifesciencia/" class="social-link"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.tiktok.com/@ifesciencia" class="social-link"><i class="fab fa-tiktok"></i></a>
+        </div>
+      </div>
+    </div>
+    
+    <hr class="footer-divider">
+    
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <p class="copyright">
+          © 2025 IFES Ciência - Instituto Federal do Espírito Santo. 
+          <br class="d-md-none">Todos os direitos reservados.
+        </p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <div class="footer-badge">
+          <i class="fas fa-shield-alt me-2"></i>
+          Educação Pública Federal
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Navbar scroll effect
 window.addEventListener('scroll', function() {
-    const navbar = document.getElementById('mainNavbar');
-    if (window.scrollY > 100) {
-        navbar.classList.add('scrolled');
-    } else {
-        navbar.classList.remove('scrolled');
-    }
-});
-
-// Search functionality
-document.getElementById('searchExperiments').addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase().trim();
-    const experimentItems = document.querySelectorAll('.experiment-item');
-    const container = document.getElementById('experimentsContainer');
-    const noExperiments = document.getElementById('noExperiments');
-    let visibleCount = 0;
-
-    experimentItems.forEach(item => {
-        const title = item.dataset.title;
-        const description = item.dataset.description;
-        
-        if (title.includes(searchTerm) || description.includes(searchTerm) || searchTerm === '') {
-            item.style.display = 'block';
-            visibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-
-    // Show/hide no results message
-    if (visibleCount === 0 && searchTerm !== '') {
-        noExperiments.style.display = 'block';
-    } else {
-        noExperiments.style.display = 'none';
-    }
-});
-
-// Add entrance animations to cards
-window.addEventListener('load', function() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '0';
-                entry.target.style.transform = 'translateY(30px)';
-                entry.target.style.animation = 'slideInUp 0.6s ease-out forwards';
-                
-                const style = document.createElement('style');
-                style.textContent = `
-                    @keyframes slideInUp {
-                        from {
-                            opacity: 0;
-                            transform: translateY(30px);
-                        }
-                        to {
-                            opacity: 1;
-                            transform: translateY(0);
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.experiment-card').forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-        observer.observe(card);
-    });
+  const navbar = document.getElementById('mainNavbar');
+  if (window.scrollY > 100) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
 });
 
 // Smooth scroll for internal links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    });
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  });
 });
 
-// Modal enhancement
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('show.bs.modal', function () {
-        document.body.style.overflow = 'hidden';
+// Add entrance animations to cards
+window.addEventListener('load', function() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'slideInUp 0.6s ease-out forwards';
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  document.querySelectorAll('.experiment-card').forEach(card => {
+    observer.observe(card);
+  });
+});
+
+// Particle animation for page header
+function createParticles() {
+  const headerSection = document.querySelector('.page-header');
+  const particleCount = 30;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.style.position = 'absolute';
+    particle.style.width = Math.random() * 4 + 2 + 'px';
+    particle.style.height = particle.style.width;
+    particle.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+    particle.style.borderRadius = '50%';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animation = `floatRandom ${Math.random() * 20 + 10}s ease-in-out infinite`;
+    particle.style.animationDelay = Math.random() * 20 + 's';
+    particle.style.zIndex = '2';
+    headerSection.appendChild(particle);
+  }
+}
+
+// Initialize particles when page loads
+window.addEventListener('load', createParticles);
+
+// Enhanced modal interactions
+document.addEventListener('DOMContentLoaded', function() {
+  // Add hover effects to experiment cards
+  const experimentCards = document.querySelectorAll('.experiment-card');
+  
+  experimentCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-10px) scale(1.02)';
     });
     
-    modal.addEventListener('hide.bs.modal', function () {
-        document.body.style.overflow = 'auto';
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0) scale(1)';
     });
+  });
+  
+  // Modal enhancement
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => {
+    modal.addEventListener('shown.bs.modal', function() {
+      // Add entrance animation to modal content
+      const modalContent = this.querySelector('.modal-content');
+      modalContent.style.animation = 'slideInUp 0.4s ease-out';
+    });
+  });
 });
-</script>
 
-</body>
-</html>
+// Add loading state to buttons
+document.querySelectorAll('.btn-custom').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const originalText = this.innerHTML;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Carregando...';
+    
+    setTimeout(() => {
+      this.innerHTML = originalText;
+    }, 500);
+  });
+});

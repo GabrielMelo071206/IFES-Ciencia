@@ -31,8 +31,16 @@
             <tr>
                 <td><img src="{{ experimento.capa }}" alt="{{ experimento.titulo }}" width="60"></td>
                 <td>{{ experimento.titulo }}</td>
-                <td>{{ experimento.descricao[:50] }}...</td>
-                <td>{{ experimento.materiais[:50] }}...</td>
+                <td>
+                    <div class="text-truncate" style="max-width: 200px;">
+                        {{ experimento.descricao|safe }}
+                    </div>
+                </td>
+                <td>
+                    <div class="text-truncate" style="max-width: 200px;">
+                        {{ experimento.materiais|safe }}
+                    </div>
+                </td>
                 <td>
                     {% if experimento.video_explicativo %}
                     <a href="{{ experimento.video_explicativo }}" target="_blank">Link</a>
@@ -43,14 +51,14 @@
                         Editar
                     </button>
                     <form action="/admin/experimentos/excluir/{{ experimento.id }}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este experimento?')">Excluir</button>
                     </form>
                 </td>
             </tr>
 
             <!-- Modal Editar Experimento -->
             <div class="modal fade" id="modalEditarExperimento{{ experimento.id }}" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <form action="/admin/experimentos/editar/{{ experimento.id }}" method="post" enctype="multipart/form-data">
                             <div class="modal-header">
@@ -64,11 +72,13 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Descrição</label>
-                                    <textarea class="form-control" name="descricao" rows="3" required>{{ experimento.descricao }}</textarea>
+                                    <div id="editor-descricao-{{ experimento.id }}" style="height: 200px;"></div>
+                                    <input type="hidden" name="descricao" id="descricao-{{ experimento.id }}" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Materiais</label>
-                                    <textarea class="form-control" name="materiais" rows="2" required>{{ experimento.materiais }}</textarea>
+                                    <div id="editor-materiais-{{ experimento.id }}" style="height: 150px;"></div>
+                                    <input type="hidden" name="materiais" id="materiais-{{ experimento.id }}" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Vídeo Explicativo (URL)</label>
@@ -76,7 +86,8 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Capa (opcional)</label>
-                                    <input type="file" class="form-control" name="capa_file">
+                                    <input type="file" class="form-control" name="capa_file" accept="image/*">
+                                    <small class="form-text text-muted">Deixe em branco para manter a capa atual</small>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -95,7 +106,7 @@
 
 <!-- Modal Adicionar Experimento -->
 <div class="modal fade" id="modalAdicionarExperimento" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form action="/admin/experimentos" method="post" enctype="multipart/form-data">
                 <div class="modal-header">
@@ -109,11 +120,13 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Descrição</label>
-                        <textarea class="form-control" name="descricao" rows="3" required></textarea>
+                        <div id="editor-descricao-novo" style="height: 200px;"></div>
+                        <input type="hidden" name="descricao" id="descricao-novo" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Materiais</label>
-                        <textarea class="form-control" name="materiais" rows="2" required></textarea>
+                        <div id="editor-materiais-novo" style="height: 150px;"></div>
+                        <input type="hidden" name="materiais" id="materiais-novo" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Vídeo Explicativo (URL)</label>
@@ -121,7 +134,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Capa</label>
-                        <input type="file" class="form-control" name="capa_file" required>
+                        <input type="file" class="form-control" name="capa_file" accept="image/*" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -132,5 +145,138 @@
         </div>
     </div>
 </div>
+
+<!-- Quill CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
+
+<!-- Quill JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuração básica do editor
+    const toolbarOptions = [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        ['link', 'blockquote'],
+        ['clean']
+    ];
+
+    // Editor para adicionar novo experimento
+    const quillDescricaoNovo = new Quill('#editor-descricao-novo', {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions
+        }
+    });
+
+    const quillMateriaisNovo = new Quill('#editor-materiais-novo', {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions
+        }
+    });
+
+    // Editores para cada experimento existente
+    {% for experimento in experimentos %}
+    const quillDescricao{{ experimento.id }} = new Quill('#editor-descricao-{{ experimento.id }}', {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions
+        }
+    });
+    
+    const quillMateriais{{ experimento.id }} = new Quill('#editor-materiais-{{ experimento.id }}', {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions
+        }
+    });
+
+    // Carregar conteúdo existente
+    quillDescricao{{ experimento.id }}.root.innerHTML = {{ experimento.descricao|safe|tojson }};
+    quillMateriais{{ experimento.id }}.root.innerHTML = {{ experimento.materiais|safe|tojson }};
+    {% endfor %}
+
+    // Função para sincronizar conteúdo dos editores com os campos hidden
+    function syncEditorContent() {
+        // Novo experimento
+        document.getElementById('descricao-novo').value = quillDescricaoNovo.root.innerHTML;
+        document.getElementById('materiais-novo').value = quillMateriaisNovo.root.innerHTML;
+
+        // Experimentos existentes
+        {% for experimento in experimentos %}
+        if (document.getElementById('descricao-{{ experimento.id }}')) {
+            document.getElementById('descricao-{{ experimento.id }}').value = quillDescricao{{ experimento.id }}.root.innerHTML;
+        }
+        if (document.getElementById('materiais-{{ experimento.id }}')) {
+            document.getElementById('materiais-{{ experimento.id }}').value = quillMateriais{{ experimento.id }}.root.innerHTML;
+        }
+        {% endfor %}
+    }
+
+    // Sincronizar quando o conteúdo dos editores mudar
+    quillDescricaoNovo.on('text-change', function() {
+        document.getElementById('descricao-novo').value = quillDescricaoNovo.root.innerHTML;
+    });
+
+    quillMateriaisNovo.on('text-change', function() {
+        document.getElementById('materiais-novo').value = quillMateriaisNovo.root.innerHTML;
+    });
+
+    {% for experimento in experimentos %}
+    quillDescricao{{ experimento.id }}.on('text-change', function() {
+        document.getElementById('descricao-{{ experimento.id }}').value = quillDescricao{{ experimento.id }}.root.innerHTML;
+    });
+
+    quillMateriais{{ experimento.id }}.on('text-change', function() {
+        document.getElementById('materiais-{{ experimento.id }}').value = quillMateriais{{ experimento.id }}.root.innerHTML;
+    });
+    {% endfor %}
+
+    // Sincronizar antes de enviar qualquer formulário
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', syncEditorContent);
+    });
+});
+</script>
+
+<style>
+.ql-editor {
+    min-height: 100px;
+}
+
+.ql-toolbar {
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+
+.ql-container {
+    border-bottom: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+
+/* Estilo para o conteúdo HTML na tabela */
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Estilo para listas e formatação na tabela */
+.text-truncate ul, .text-truncate ol {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.text-truncate p {
+    margin: 0;
+}
+</style>
 
 {% endblock %}

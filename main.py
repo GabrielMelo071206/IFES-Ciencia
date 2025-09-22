@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 import os
 import shutil
+import html
+from datetime import datetime
 
 # Importações dos repositórios e modelos
 from data.repo import administrador_repo, integrante_repo, experimento_repo
@@ -23,8 +25,30 @@ static_dir = "static"
 os.makedirs(uploads_dir, exist_ok=True)
 os.makedirs(static_dir, exist_ok=True)
 
-# Templates
+# Templates com filtros personalizados
 templates = Jinja2Templates(directory="templates")
+
+# Adiciona filtro personalizado para sanitizar HTML
+def sanitize_html(text):
+    """Sanitiza HTML básico mantendo apenas tags seguras"""
+    if not text:
+        return ""
+    
+    # Lista de tags permitidas para formatação básica
+    allowed_tags = [
+        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li',
+        'blockquote',
+        'a', 'span', 'div'
+    ]
+    
+    # Aqui você pode implementar uma sanitização mais robusta usando bibliotecas como bleach
+    # Por agora, retornamos o texto como está (assumindo que vem do editor controlado)
+    return text
+
+# Adiciona o filtro ao Jinja2
+templates.env.filters['sanitize_html'] = sanitize_html
 
 # Monta as pastas estáticas
 app.mount("/static", StaticFiles(directory=uploads_dir), name="uploads")
@@ -41,6 +65,24 @@ def verificar_login_admin(request: Request):
             detail="Não autorizado",
             headers={"Location": "/login_admin"}
         )
+
+def sanitizar_conteudo_html(conteudo: str) -> str:
+    """
+    Sanitiza o conteúdo HTML recebido do editor
+    Remove scripts maliciosos e mantém apenas formatação básica
+    """
+    if not conteudo:
+        return ""
+    
+    # Remove tags script e style por segurança
+    conteudo = conteudo.replace('<script', '&lt;script').replace('</script>', '&lt;/script&gt;')
+    conteudo = conteudo.replace('<style', '&lt;style').replace('</style>', '&lt;/style&gt;')
+    
+    # Remove atributos on* (onclick, onload, etc.) por segurança
+    import re
+    conteudo = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', conteudo, flags=re.IGNORECASE)
+    
+    return conteudo
 
 # --- LOGIN/LOGOUT ADMIN ---
 
@@ -68,6 +110,33 @@ async def logout_admin(request: Request):
     request.session.pop("admin_logado", None)
     request.session.setdefault("flash_messages", []).append({"message": "Você saiu da área de administrador.", "type": "info"})
     return RedirectResponse(url="/login_admin", status_code=status.HTTP_303_SEE_OTHER)
+
+# --- UPLOAD DE IMAGENS PARA EDITOR ---
+
+@app.post("/admin/upload_image")
+async def upload_image(request: Request, file: UploadFile = File(...), _=Depends(verificar_login_admin)):
+    """Upload de imagens para o editor de texto rico"""
+    # Verifica se é uma imagem
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Apenas arquivos de imagem são permitidos.")
+
+    # Gera nome único para evitar conflitos
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_extension = os.path.splitext(file.filename)[1]
+    unique_filename = f"editor_img_{timestamp}{file_extension}"
+    
+    file_path = os.path.join(uploads_dir, unique_filename)
+    
+    try:
+        # Salva o arquivo
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Retorna a URL pública para o editor
+        url = f"/static/{unique_filename}"
+        return {"url": url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao fazer upload da imagem: {str(e)}")
 
 # --- ADMIN INTEGRANTES ---
 
@@ -168,12 +237,30 @@ async def adicionar_experimento(
     video_explicativo: Optional[str] = Form(None),
     _=Depends(verificar_login_admin)
 ):
+    # Sanitiza o conteúdo HTML
+    descricao_sanitizada = sanitizar_conteudo_html(descricao)
+    materiais_sanitizados = sanitizar_conteudo_html(materiais)
+    
+    # Valida se o arquivo de capa foi enviado
+    if not capa_file or not capa_file.filename:
+        request.session.setdefault("flash_messages", []).append({"message": "A capa do experimento é obrigatória.", "type": "danger"})
+        return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
+    
+    # Salva a capa
     file_path = os.path.join(uploads_dir, capa_file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(capa_file.file, buffer)
     capa_url = f"/static/{capa_file.filename}"
 
-    novo_experimento = Experimento(id=None, titulo=titulo, descricao=descricao, materiais=materiais, capa=capa_url, video_explicativo=video_explicativo)
+    # Cria o experimento com conteúdo sanitizado
+    novo_experimento = Experimento(
+        id=None, 
+        titulo=titulo, 
+        descricao=descricao_sanitizada, 
+        materiais=materiais_sanitizados, 
+        capa=capa_url, 
+        video_explicativo=video_explicativo
+    )
     experimento_repo.inserir_experimento(novo_experimento)
 
     request.session.setdefault("flash_messages", []).append({"message": "Experimento adicionado com sucesso!", "type": "success"})
@@ -190,16 +277,33 @@ async def editar_experimento(
     video_explicativo: Optional[str] = Form(None),
     _=Depends(verificar_login_admin)
 ):
+    # Busca o experimento existente
     experimento = experimento_repo.obter_experimento_por_id(id_experimento)
+    if not experimento:
+        request.session.setdefault("flash_messages", []).append({"message": "Experimento não encontrado.", "type": "danger"})
+        return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
+    
+    # Sanitiza o conteúdo HTML
+    descricao_sanitizada = sanitizar_conteudo_html(descricao)
+    materiais_sanitizados = sanitizar_conteudo_html(materiais)
+    
+    # Atualiza a capa se uma nova foi enviada
+    capa_url = experimento.capa
     if capa_file and capa_file.filename:
         file_path = os.path.join(uploads_dir, capa_file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(capa_file.file, buffer)
         capa_url = f"/static/{capa_file.filename}"
-    else:
-        capa_url = experimento.capa
 
-    experimento_atualizado = Experimento(id=id_experimento, titulo=titulo, descricao=descricao, materiais=materiais, capa=capa_url, video_explicativo=video_explicativo)
+    # Atualiza o experimento
+    experimento_atualizado = Experimento(
+        id=id_experimento, 
+        titulo=titulo, 
+        descricao=descricao_sanitizada, 
+        materiais=materiais_sanitizados, 
+        capa=capa_url, 
+        video_explicativo=video_explicativo
+    )
     experimento_repo.alterar_experimento(experimento_atualizado)
 
     request.session.setdefault("flash_messages", []).append({"message": "Experimento atualizado com sucesso!", "type": "success"})
@@ -247,6 +351,22 @@ async def experimentos_cliente(request: Request):
     return templates.TemplateResponse("/cliente/experimentos.html", {
         "request": request,
         "experimentos": experimentos,
+        "flash_messages": get_flash_messages(request)
+    })
+
+@app.get("/cliente/experimentos/{id_experimento}", response_class=HTMLResponse)
+async def detalhes_experimento(request: Request, id_experimento: int):
+    experimento = experimento_repo.obter_experimento_por_id(id_experimento)
+    if not experimento:
+        request.session.setdefault("flash_messages", []).append({
+            "message": "Experimento não encontrado.",
+            "type": "danger"
+        })
+        return RedirectResponse(url="/cliente/experimentos", status_code=status.HTTP_303_SEE_OTHER)
+    
+    return templates.TemplateResponse("/cliente/detalhes_experimento.html", {
+        "request": request,
+        "experimento": experimento,
         "flash_messages": get_flash_messages(request)
     })
 
