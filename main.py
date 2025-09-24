@@ -123,6 +123,7 @@ async def logout_admin(request: Request):
 async def admin_dashboard(request: Request, _=Depends(verificar_login_admin)):
     return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
 
+
 # --- UPLOAD DE IMAGENS PARA EDITOR ---
 
 @app.post("/admin/upload_image")
@@ -262,7 +263,7 @@ async def adicionar_experimento(
     file_path = os.path.join(uploads_dir, capa_file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(capa_file.file, buffer)
-    capa_url = f"/static/{capa_file.filename}"
+    capa_url = f"/uploads/{capa_file.filename}"
 
     # Cria o experimento com conteúdo sanitizado
     novo_experimento = Experimento(
@@ -305,7 +306,7 @@ async def editar_experimento(
         file_path = os.path.join(uploads_dir, capa_file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(capa_file.file, buffer)
-        capa_url = f"/static/{capa_file.filename}"
+        capa_url = f"/uploads/{capa_file.filename}"
 
     # Atualiza o experimento
     experimento_atualizado = Experimento(
