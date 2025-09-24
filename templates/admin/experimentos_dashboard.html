@@ -165,118 +165,69 @@ document.addEventListener('DOMContentLoaded', function() {
         ['clean']
     ];
 
-    // Editor para adicionar novo experimento
-    const quillDescricaoNovo = new Quill('#editor-descricao-novo', {
-        theme: 'snow',
-        modules: {
-            toolbar: toolbarOptions
+    // Armazenar todos os editores Quill
+    window.quillEditors = {};
+    
+    // Inicializar editores para elementos existentes
+    const editorElements = document.querySelectorAll('[id^="editor-"]');
+    
+    editorElements.forEach(element => {
+        const editorId = element.id;
+        const fieldType = editorId.includes('descricao') ? 'descricao' : 'materiais';
+        const experimentoId = editorId.split('-').pop();
+        
+        // Criar o editor Quill
+        const quill = new Quill(`#${editorId}`, {
+            theme: 'snow',
+            modules: {
+                toolbar: toolbarOptions
+            }
+        });
+        
+        // Armazenar referência do editor
+        window.quillEditors[editorId] = quill;
+        
+        // Carregar conteúdo existente se houver
+        const hiddenField = document.getElementById(`${fieldType}-${experimentoId}`);
+        if (hiddenField && hiddenField.value) {
+            try {
+                quill.root.innerHTML = hiddenField.value;
+            } catch (e) {
+                console.warn(`Erro ao carregar conteúdo para ${editorId}:`, e);
+            }
         }
-    });
-
-    const quillMateriaisNovo = new Quill('#editor-materiais-novo', {
-        theme: 'snow',
-        modules: {
-            toolbar: toolbarOptions
-        }
-    });
-
-    // Editores para cada experimento existente
-    {% for experimento in experimentos %}
-    const quillDescricao{{ experimento.id }} = new Quill('#editor-descricao-{{ experimento.id }}', {
-        theme: 'snow',
-        modules: {
-            toolbar: toolbarOptions
-        }
+        
+        // Sincronizar mudanças
+        quill.on('text-change', function() {
+            if (hiddenField) {
+                hiddenField.value = quill.root.innerHTML;
+            }
+        });
     });
     
-    const quillMateriais{{ experimento.id }} = new Quill('#editor-materiais-{{ experimento.id }}', {
-        theme: 'snow',
-        modules: {
-            toolbar: toolbarOptions
-        }
-    });
-
-    // Carregar conteúdo existente
-    quillDescricao{{ experimento.id }}.root.innerHTML = {{ experimento.descricao|safe|tojson }};
-    quillMateriais{{ experimento.id }}.root.innerHTML = {{ experimento.materiais|safe|tojson }};
-    {% endfor %}
-
-    // Função para sincronizar conteúdo dos editores com os campos hidden
-    function syncEditorContent() {
-        // Novo experimento
-        document.getElementById('descricao-novo').value = quillDescricaoNovo.root.innerHTML;
-        document.getElementById('materiais-novo').value = quillMateriaisNovo.root.innerHTML;
-
-        // Experimentos existentes
-        {% for experimento in experimentos %}
-        if (document.getElementById('descricao-{{ experimento.id }}')) {
-            document.getElementById('descricao-{{ experimento.id }}').value = quillDescricao{{ experimento.id }}.root.innerHTML;
-        }
-        if (document.getElementById('materiais-{{ experimento.id }}')) {
-            document.getElementById('materiais-{{ experimento.id }}').value = quillMateriais{{ experimento.id }}.root.innerHTML;
-        }
-        {% endfor %}
+    // Função para sincronizar todos os editores
+    function syncAllEditors() {
+        Object.keys(window.quillEditors).forEach(editorId => {
+            const quill = window.quillEditors[editorId];
+            const fieldType = editorId.includes('descricao') ? 'descricao' : 'materiais';
+            const experimentoId = editorId.split('-').pop();
+            const hiddenField = document.getElementById(`${fieldType}-${experimentoId}`);
+            
+            if (hiddenField && quill) {
+                hiddenField.value = quill.root.innerHTML;
+            }
+        });
     }
-
-    // Sincronizar quando o conteúdo dos editores mudar
-    quillDescricaoNovo.on('text-change', function() {
-        document.getElementById('descricao-novo').value = quillDescricaoNovo.root.innerHTML;
-    });
-
-    quillMateriaisNovo.on('text-change', function() {
-        document.getElementById('materiais-novo').value = quillMateriaisNovo.root.innerHTML;
-    });
-
-    {% for experimento in experimentos %}
-    quillDescricao{{ experimento.id }}.on('text-change', function() {
-        document.getElementById('descricao-{{ experimento.id }}').value = quillDescricao{{ experimento.id }}.root.innerHTML;
-    });
-
-    quillMateriais{{ experimento.id }}.on('text-change', function() {
-        document.getElementById('materiais-{{ experimento.id }}').value = quillMateriais{{ experimento.id }}.root.innerHTML;
-    });
-    {% endfor %}
-
-    // Sincronizar antes de enviar qualquer formulário
+    
+    // Sincronizar antes de enviar formulários
     document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', syncEditorContent);
+        form.addEventListener('submit', function(e) {
+            syncAllEditors();
+        });
     });
+    
+    // Expor função globalmente se necessário
+    window.syncAllEditors = syncAllEditors;
 });
 </script>
-
-<style>
-.ql-editor {
-    min-height: 100px;
-}
-
-.ql-toolbar {
-    border-top: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    border-right: 1px solid #ccc;
-}
-
-.ql-container {
-    border-bottom: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    border-right: 1px solid #ccc;
-}
-
-/* Estilo para o conteúdo HTML na tabela */
-.text-truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Estilo para listas e formatação na tabela */
-.text-truncate ul, .text-truncate ol {
-    margin: 0;
-    padding-left: 20px;
-}
-
-.text-truncate p {
-    margin: 0;
-}
-</style>
-
 {% endblock %}

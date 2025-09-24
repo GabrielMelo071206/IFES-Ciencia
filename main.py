@@ -9,6 +9,8 @@ import shutil
 import html
 from datetime import datetime
 
+
+
 # Importações dos repositórios e modelos
 from data.repo import administrador_repo, integrante_repo, experimento_repo
 from data.model.integrante_model import Integrante
@@ -51,8 +53,8 @@ def sanitize_html(text):
 templates.env.filters['sanitize_html'] = sanitize_html
 
 # Monta as pastas estáticas
-app.mount("/static", StaticFiles(directory=uploads_dir), name="uploads")
-app.mount("/static_css", StaticFiles(directory=static_dir), name="static_css")
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Funções utilitárias
 def get_flash_messages(request: Request):
@@ -84,6 +86,12 @@ def sanitizar_conteudo_html(conteudo: str) -> str:
     
     return conteudo
 
+# FAVICON #
+@app.get("/favicon.ico")
+async def favicon():
+    return RedirectResponse(url="/static/style/css/favicon.ico")
+
+
 # --- LOGIN/LOGOUT ADMIN ---
 
 @app.get("/login_admin", response_class=HTMLResponse)
@@ -110,6 +118,10 @@ async def logout_admin(request: Request):
     request.session.pop("admin_logado", None)
     request.session.setdefault("flash_messages", []).append({"message": "Você saiu da área de administrador.", "type": "info"})
     return RedirectResponse(url="/login_admin", status_code=status.HTTP_303_SEE_OTHER)
+
+@app.get("/admin", response_class=RedirectResponse)
+async def admin_dashboard(request: Request, _=Depends(verificar_login_admin)):
+    return RedirectResponse(url="/admin/integrantes", status_code=status.HTTP_303_SEE_OTHER)
 
 # --- UPLOAD DE IMAGENS PARA EDITOR ---
 
@@ -166,7 +178,7 @@ async def adicionar_integrante(
     file_path = os.path.join(uploads_dir, foto_file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(foto_file.file, buffer)
-    foto_url = f"/static/{foto_file.filename}"
+    foto_url = f"/uploads/{foto_file.filename}"
 
     novo_integrante = Integrante(id=None, nome=nome, turma=turma, funcao=funcao, foto=foto_url, redes_sociais=redes_sociais)
     integrante_repo.inserir_integrante(novo_integrante)
@@ -195,7 +207,7 @@ async def editar_integrante(
         file_path = os.path.join(uploads_dir, foto_file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(foto_file.file, buffer)
-        foto_url = f"/static/{foto_file.filename}"
+        foto_url = f"/uploads/{foto_file.filename}"
 
     integrante_atualizado = Integrante(id=id_integrante, nome=nome, turma=turma, funcao=funcao, foto=foto_url, redes_sociais=redes_sociais)
     integrante_repo.alterar_integrante(integrante_atualizado)
@@ -323,6 +335,11 @@ async def excluir_experimento(request: Request, id_experimento: int, _=Depends(v
     return RedirectResponse(url="/admin/experimentos", status_code=status.HTTP_303_SEE_OTHER)
 
 # --- CLIENTE ---
+
+# Adiciona uma rota de redirecionamento para evitar o erro 404
+@app.get("/cliente/integrantes", response_class=RedirectResponse)
+async def redirect_integrantes():
+    return RedirectResponse(url="/cliente/sobre_nos", status_code=301)
 
 @app.get("/", response_class=HTMLResponse)
 async def index_cliente(request: Request):
